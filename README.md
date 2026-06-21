@@ -334,3 +334,14 @@ python src/evaluate.py
 - **Não altere os datasets de avaliação** - apenas os prompts em `prompts/bug_to_user_story_v2.yml`
 - **Itere, itere, itere** - é normal precisar de 3-5 iterações para atingir 0.8 em todas as métricas
 - **Documente seu processo** - a jornada de otimização é tão importante quanto o resultado final
+
+---
+
+## Técnicas Adotadas (prévia)
+O prompt otimizado integra técnicas avançadas para garantir excelência nas métricas de avaliação ( $\ge$ 0.8). Primeiramente, a separação rigorosa entre **System e User Prompt**, aliada ao **Role Prompting** (persona de PO/QA Sênior), isola as instruções da entrada de dados e ancora o modelo em um vocabulário técnico, garantindo foco e alinhamento com as boas práticas de Engenharia de Software. 
+
+Para maximizar **F1-Score**, **Precision** e **Correctness** (minimizando alucinações), o prompt utiliza **Chain of Thought (CoT)**, obrigando o LLM a separar estritamente os "Fatos Relatados" das "Hipóteses Técnicas" antes de gerar a resposta. Essa separação, combinada com regras claras de **Tratamento de Edge Cases** (que instruem o modelo a criar uma lista de "Informações Pendentes" em relatos vagos, em vez de adivinhar o contexto), garante que a inteligência artificial não invente requisitos inexistentes.
+
+Em relação à **Clarity** e **Helpfulness**, adotou-se o **Skeleton of Thought** associado ao padrão **BDD (Dado/Quando/Então)**. Isso engessa a formatação de saída e nivela a abstração dos Critérios de Aceite em uma linguagem universal e de fácil leitura para todas as áreas técnicas. A separação entre comportamento (User Story) e investigação de código (Notas Técnicas) torna o texto imediatamente acionável, pronto para ser exportado para ferramentas como o Jira. 
+
+Por fim, toda essa arquitetura estrutural é cimentada pelo **Few-Shot Learning**. O fornecimento de exemplos reais contrastantes (um relato rico e um incompleto) tangibiliza todas as regras mencionadas, servindo como um espelho de comportamento que elimina a margem de erro ou de interpretação ambígua pelo LLM.
