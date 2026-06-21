@@ -17,7 +17,7 @@ import yaml
 from dotenv import load_dotenv
 from langchain import hub
 
-from utils import check_env_vars, print_section_header
+from utils import check_env_vars, print_section_header, save_yaml
 
 load_dotenv()
 
@@ -117,49 +117,9 @@ def _extract_prompt_parts(prompt) -> tuple[str, str]:
     return system_prompt, user_prompt or "{bug_report}"
 
 
-def _quoted(value: str) -> str:
-    dumped = yaml.safe_dump(
-        value,
-        allow_unicode=True,
-        default_style='"',
-        width=10_000,
-    ).strip()
-    return dumped.removesuffix("\n...")
-
-
-def _format_literal_block(value: str, indentation: str = "    ") -> str:
-    lines = value.rstrip().splitlines()
-    return "\n".join(f"{indentation}{line}" if line else indentation.rstrip() for line in lines)
-
-
-def _format_flow_list(values: list[str]) -> str:
-    return "[" + ", ".join(_quoted(str(value)) for value in values) + "]"
-
-
-def _save_prompt_yaml(prompt_data: dict, file_path: Path) -> None:
-    """
-    Salva o YAML no mesmo formato do arquivo prompts/bug_to_user_story_v1.yml.
-
-    O PyYAML nao preserva comentarios nem listas em fluxo por padrao, entao a
-    renderizacao abaixo mantem a estrutura visual exigida pelo exercicio.
-    """
-    file_path.parent.mkdir(parents=True, exist_ok=True)
-
-    content = (
-        f"{PROMPT_KEY}:\n"
-        f"  description: {_quoted(prompt_data['description'])}\n"
-        "  system_prompt: |\n"
-        f"{_format_literal_block(prompt_data['system_prompt'])}\n"
-        "\n"
-        f"  user_prompt: {_quoted(prompt_data['user_prompt'])}\n"
-        "\n"
-        "  # Metadados\n"
-        f"  version: {_quoted(prompt_data['version'])}\n"
-        f"  created_at: {_quoted(prompt_data['created_at'])}\n"
-        f"  tags: {_format_flow_list(prompt_data['tags'])}\n"
-    )
-
-    file_path.write_text(content, encoding="utf-8")
+def _save_prompt_yaml(prompt_data: dict, file_path: Path) -> bool:
+    """Salva o prompt em YAML usando o helper padrao do projeto."""
+    return save_yaml({PROMPT_KEY: prompt_data}, str(file_path))
 
 
 def pull_prompts_from_langsmith():
@@ -192,7 +152,9 @@ def pull_prompts_from_langsmith():
             "tags": metadata["tags"],
         }
 
-        _save_prompt_yaml(prompt_data, OUTPUT_PROMPT_PATH)
+        if not _save_prompt_yaml(prompt_data, OUTPUT_PROMPT_PATH):
+            return False
+
         print(f"Prompt salvo em: {OUTPUT_PROMPT_PATH}")
         return True
     except Exception as error:
