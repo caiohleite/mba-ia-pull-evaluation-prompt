@@ -129,8 +129,6 @@ def pull_prompts_from_langsmith():
     Returns:
         True se sucesso, False caso contrario.
     """
-    print_section_header("Pull do Prompt LangSmith")
-
     if not check_env_vars(["LANGSMITH_API_KEY"]):
         return False
 
@@ -164,6 +162,8 @@ def pull_prompts_from_langsmith():
 
 def main():
     """Função principal"""
+    print_section_header("Pull do Prompt LangSmith")
+
     success = pull_prompts_from_langsmith()
     return 0 if success else 1
 
