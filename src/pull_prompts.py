@@ -28,16 +28,44 @@ def pull_prompts_from_langsmith():
     print(f"Fazendo pull de '{prompt_name}'...")
     
     try:
-        # Client() garante que as credenciais do ambiente sejam checadas
+        # Usa o Client recomendado do LangSmith em vez do langchain.hub
         from langsmith import Client
-        Client()
+        client = Client()
         
-        # Faz o pull do prompt
-        prompt = hub.pull(prompt_name)
+        # Faz o pull do prompt pelo client
+        prompt = client.pull_prompt(prompt_name)
         
-        # Salva o prompt usando serialização nativa (dicionário do langchain) 
-        # A instrução fala para usar 'serialização nativa do LangChain'
+        # Serialização nativa inicial
         prompt_dict = prompt.dict()
+        
+        # O método dict() nativo muitas vezes não serializa os templates aninhados (retorna [{}, {}]).
+        # Portanto, precisamos extrair os textos do system e user prompt explicitamente:
+        if hasattr(prompt, 'messages'):
+            system_prompt = ""
+            user_prompt = ""
+            
+            for msg in prompt.messages:
+                msg_type = msg.__class__.__name__
+                # Extrai o template de texto de cada mensagem
+                template_text = msg.prompt.template if hasattr(msg, 'prompt') else ""
+                
+                if msg_type == 'SystemMessagePromptTemplate':
+                    system_prompt = template_text
+                elif msg_type == 'HumanMessagePromptTemplate':
+                    user_prompt = template_text
+            
+            # Reconstrói a estrutura no padrão que o projeto espera (similar ao bug_to_user_story_v1.yml)
+            custom_prompt_data = {
+                prompt_name.split("/")[-1]: {
+                    "description": "Prompt extraído do LangSmith",
+                    "system_prompt": system_prompt,
+                    "user_prompt": user_prompt,
+                    "version": "v1",
+                    "metadata": prompt_dict.get("metadata", {})
+                }
+            }
+            # Substituímos o dict padrão pelo nosso customizado para ficar com o formato correto
+            prompt_dict = custom_prompt_data
         
         if save_yaml(prompt_dict, output_path):
             print(f"✅ Prompt salvo com sucesso em: {output_path}")
