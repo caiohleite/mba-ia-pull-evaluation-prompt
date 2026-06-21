@@ -4,85 +4,120 @@ Script para fazer pull de prompts do LangSmith Prompt Hub.
 Este script:
 1. Conecta ao LangSmith usando credenciais do .env
 2. Faz pull dos prompts do Hub
-3. Salva localmente em prompts/bug_to_user_story_v1.yml
+3. Salva localmente em prompts/bug_to_user_story_v1_download2.yml
 
 SIMPLIFICADO: Usa serialização nativa do LangChain para extrair prompts.
 """
 
-import os
 import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
-from langchain import hub
+from langsmith import Client
+
 from utils import save_yaml, check_env_vars, print_section_header
 
 load_dotenv()
 
+PROMPT_NAME = "leonanluppi/bug_to_user_story_v1"
+OUTPUT_FILE = Path("prompts/bug_to_user_story_v1_download2.yml")
+
 
 def pull_prompts_from_langsmith():
-    """Faz pull de um prompt do LangSmith e salva localmente."""
-    prompt_name = "leonanluppi/bug_to_user_story_v1"
-    output_path = "prompts/bug_to_user_story_v1_download2.yml"
-    
-    print_section_header("Buscando prompt no LangSmith")
-    print(f"Fazendo pull de '{prompt_name}'...")
-    
-    try:
-        # Usa o Client recomendado do LangSmith em vez do langchain.hub
-        from langsmith import Client
-        client = Client()
-        
-        # Faz o pull do prompt pelo client
-        prompt = client.pull_prompt(prompt_name)
-        
-        # Serialização nativa inicial
-        prompt_dict = prompt.dict()
-        
-        # O método dict() nativo muitas vezes não serializa os templates aninhados (retorna [{}, {}]).
-        # Portanto, precisamos extrair os textos do system e user prompt explicitamente:
-        if hasattr(prompt, 'messages'):
-            system_prompt = ""
-            user_prompt = ""
-            
-            for msg in prompt.messages:
-                msg_type = msg.__class__.__name__
-                # Extrai o template de texto de cada mensagem
-                template_text = msg.prompt.template if hasattr(msg, 'prompt') else ""
-                
-                if msg_type == 'SystemMessagePromptTemplate':
-                    system_prompt = template_text
-                elif msg_type == 'HumanMessagePromptTemplate':
-                    user_prompt = template_text
-            
-            # Reconstrói a estrutura no padrão que o projeto espera (similar ao bug_to_user_story_v1.yml)
-            custom_prompt_data = {
-                prompt_name.split("/")[-1]: {
-                    "description": "Prompt extraído do LangSmith",
-                    "system_prompt": system_prompt,
-                    "user_prompt": user_prompt,
-                    "version": "v1",
-                    "metadata": prompt_dict.get("metadata", {})
-                }
-            }
-            # Substituímos o dict padrão pelo nosso customizado para ficar com o formato correto
-            prompt_dict = custom_prompt_data
-        
-        if save_yaml(prompt_dict, output_path):
-            print(f"✅ Prompt salvo com sucesso em: {output_path}")
+    """
+    Faz pull do prompt do LangSmith Hub e salva em YAML.
+    """
+
+    print_section_header("Pull Prompt do LangSmith")
+
+    client = Client()
+
+    print(f"Obtendo prompt: {PROMPT_NAME}")
+
+    prompt = client.pull_prompt(PROMPT_NAME)
+
+    print(f"✓ Prompt encontrado")
+    print(f"✓ Tipo: {prompt.__class__.__name__}")
+
+    #
+    # Metadados do Hub
+    #
+    metadata = {
+        "owner": prompt.metadata.get("lc_hub_owner"),
+        "repo": prompt.metadata.get("lc_hub_repo"),
+        "commit_hash": prompt.metadata.get("lc_hub_commit_hash"),
+    }
+
+    #
+    # Mensagens (System/Human/etc.)
+    #
+    messages = []
+
+    for msg in prompt.messages:
+        class_name = msg.__class__.__name__
+
+        if class_name.startswith("System"):
+            role = "system"
+        elif class_name.startswith("Human"):
+            role = "human"
+        elif class_name.startswith("AI"):
+            role = "ai"
         else:
-            print("❌ Falha ao salvar o prompt.")
-            
-    except Exception as e:
-        print(f"❌ Erro: {e}")
-        sys.exit(1)
+            role = class_name
+
+        message_data = {
+            "role": role,
+            "message_type": class_name,
+            "template": msg.prompt.template,
+            "input_variables": msg.prompt.input_variables,
+        }
+
+        messages.append(message_data)
+
+    #
+    # Estrutura final exportada
+    #
+    prompt_data = {
+        "prompt_name": PROMPT_NAME,
+        "prompt_type": prompt.__class__.__name__,
+        "metadata": metadata,
+        "input_variables": prompt.input_variables,
+        "messages": messages,
+        "langchain_json": prompt.to_json(),
+    }
+
+    OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
+
+    save_yaml(prompt_data, OUTPUT_FILE)
+
+    print(f"✓ Prompt salvo em: {OUTPUT_FILE}")
+
+    return prompt_data
+
+
 def main():
     """Função principal"""
-    # Verifica variáveis de ambiente necessárias
-    required_vars = ["LANGSMITH_API_KEY"]
-    if not check_env_vars(required_vars):
-        sys.exit(1)
-        
-    pull_prompts_from_langsmith()
-    return 0
+
+    check_env_vars(
+        [
+            "LANGSMITH_API_KEY",
+        ]
+    )
+
+    try:
+        pull_prompts_from_langsmith()
+
+        print_section_header("Concluído")
+        print("Pull realizado com sucesso.")
+
+        return 0
+
+    except Exception as exc:
+        print(f"\nErro ao realizar pull do prompt:")
+        print(f"{type(exc).__name__}: {exc}")
+
+        return 1
+
+
 if __name__ == "__main__":
     sys.exit(main())
