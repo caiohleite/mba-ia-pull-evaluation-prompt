@@ -118,4 +118,4 @@ bug_to_user_story_v2:
   version: "v2"
   created_at: "2026-06-21"
   tags: ["bug-analysis", "user-story", "agile", "bdd", "high-precision-prompt"]
-  techniques_applied: ["few-shot learning", "role specification", "edge case handling"]
+  techniques_applied: ["few-shot learning", "role prompting", "system/user prompt separation", "chain of thought", "skeleton of thought", "bdd acceptance criteria", "edge case handling"]
