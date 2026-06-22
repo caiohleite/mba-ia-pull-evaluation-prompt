@@ -8,7 +8,7 @@ Projeto desenvolvido para o desafio de pull, otimização, publicação e avalia
 | --- | --- | --- |
 | Pull do prompt inicial | `src/pull_prompts.py` baixa `leonanluppi/bug_to_user_story_v1` e salva o YAML local | `prompts/bug_to_user_story_v1.yml` |
 | Prompt otimizado | Prompt v2 com System/User Prompt, Few-shot, BDD, tratamento de edge cases e regras contra alucinação | `prompts/bug_to_user_story_v2.yml` |
-| Push ao LangSmith Hub | `src/push_prompts.py` valida o YAML, monta `ChatPromptTemplate` e publica o prompt como público | `chldev/bug_to_user_story_v2` |
+| Push ao LangSmith Hub | `src/push_prompts.py` valida o YAML, monta `ChatPromptTemplate` e publica o prompt como público | [`chldev/bug_to_user_story_v2`](https://smith.langchain.com/hub/chldev/bug_to_user_story_v2) |
 | Avaliação automática | `src/evaluate.py` cria/usa dataset com 15 exemplos, puxa o prompt do Hub e calcula as 5 métricas | `resultados/resultados_v2.txt` |
 | Métricas customizadas | Helpfulness, Correctness, F1-Score, Clarity e Precision | `src/metrics.py` |
 | Testes de validação | 6 testes exigidos pelo desafio implementados em `pytest` | `tests/test_prompts.py` |
@@ -53,7 +53,7 @@ A avaliação foi executada com provider Google e modelo `models/gemini-3.1-flas
 
 ### Evidências LangSmith
 
-- Dataset público com 15 exemplos: [LangSmith Dataset](https://smith.langchain.com/public/33b4bbbe-0293-43b3-9e47-bb1525031128/d)
+- Dataset público com 15 exemplos: [LangSmith Dataset](https://smith.langchain.com/public/33b4bbbe-0293-43b3-9e47-bb1525031128/d?tab=2)
 - Trace público 1: [RunnableSequence com feedback](https://smith.langchain.com/public/a78588cd-5f5d-4dbf-b19d-58cf03ffab72/r?scroll_to=feedback)
 - Trace público 2: [RunnableSequence](https://smith.langchain.com/public/f28ddde1-300b-4f98-abed-3db1fcb98127/r)
 - Trace público 3: [RunnableSequence](https://smith.langchain.com/public/502501c3-fe97-4ce1-bc42-9121ec7d7569/r)
@@ -110,7 +110,7 @@ Crie o arquivo `.env` a partir de `.env.example` e preencha as credenciais:
 LANGSMITH_TRACING=true
 LANGSMITH_ENDPOINT=https://api.smith.langchain.com
 LANGSMITH_API_KEY=<sua-chave-langsmith>
-LANGSMITH_PROJECT=mba-ia-pull-evaluation-prompt
+LANGSMITH_PROJECT=<seu-projeto-langsmith>
 USERNAME_LANGSMITH_HUB=<seu-usuario-no-hub>
 
 LLM_PROVIDER=google
@@ -179,14 +179,3 @@ mba-ia-pull-evaluation-prompt/
     └── test_prompts.py
 ```
 
-## Revisão Final do Entregável
-
-| Item do entregável | Status |
-| --- | --- |
-| Técnicas Aplicadas (Fase 2) com técnicas, justificativas e exemplos | Atendido |
-| Resultados Finais com evidências LangSmith, screenshots e tabela v1 vs v2 | Atendido |
-| Como Executar com pré-requisitos, dependências e comandos por fase | Atendido |
-| Dataset com 15 exemplos visível nas evidências | Atendido |
-| Execuções do prompt v2 com notas >= 0.8 | Atendido |
-| Tracing detalhado de pelo menos 3 exemplos | Atendido, com 4 traces públicos |
-| Testes mínimos de validação do prompt | Atendido, 6 testes passando |
